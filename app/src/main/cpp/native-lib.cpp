@@ -32,6 +32,9 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_willhua_openclrepo_MainActivity_clTest(JNIEnv *env, jobject instance) {
 
+    using namespace cv;
+    using namespace std;
+
     // TODO
     cl_wrapper clWrapper;
     LOGD("%p %p", &clWrapper, clWrapper.get_context());
@@ -46,6 +49,24 @@ Java_com_willhua_openclrepo_MainActivity_clTest(JNIEnv *env, jobject instance) {
     float *remapdata = (float*)malloc(sizeof(float) * w* h * 2);
     getFloat2Remap(remapdata, remapdata + w * h);
 
+    Mat map1(h, w, CV_32FC1, remapdata);
+    Mat map2(h, w, CV_32FC1, remapdata + w * h);
+
     writeFile(remapdata, sizeof(float)*w*h, "/sdcard/remapx.bin");
     writeFile(remapdata + w * h, sizeof(float)*w*h, "/sdcard/remapy.bin");
+
+    AAsset *file = AAssetManager_open(assetManager, "fisheye_src.jpg", AASSET_MODE_BUFFER);
+    size_t length = AAsset_getLength(file);
+    const void *filedata = AAsset_getBuffer(file);
+    std::vector<char> imgdata;
+    imgdata.resize(length);
+    memcpy(imgdata.data(), filedata, length);
+
+    cv::Mat srcimg = cv::imdecode(imgdata, 1);
+    imwrite("/sdcard/src.jpg", srcimg);
+
+    Mat undistimg;
+    cv::remap(srcimg, undistimg, map1, map2, INTER_LINEAR);
+    imwrite("/sdcard/undist.jpg", undistimg);
+
 }

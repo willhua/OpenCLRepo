@@ -27,12 +27,17 @@ void getSize(int *w, int *h){
 
 void getFloat2Remap(float *mapx, float *mapy){
     using namespace cv;
-    Mat mk(3, 3, CV_32FC1, (void*)CAMERA_MK);
+    Mat mk(3, 3, CV_32FC1, cv::Scalar::all(0));
+    mk.at<float>(0, 0) = CAMERA_MK[0];
+    mk.at<float>(1, 1) = CAMERA_MK[1];
+    mk.at<float>(0, 2) = CAMERA_MK[2];
+    mk.at<float>(1, 2) = CAMERA_MK[3];
+    mk.at<float>(2, 2) = 1;
     Mat md(4, 1, CV_32FC1, (void*)CAMERA_MD);
     const Size imgsize(SENSOR_W, SENSOR_H);
 
     Mat map1, map2;
-    cv::fisheye::initUndistortRectifyMap(mk, md, cv::noArray(), mk.clone(), imgsize, CV_32FC1, map1, map2);
+    cv::fisheye::initUndistortRectifyMap(mk, md, Mat(), mk.clone(), imgsize, CV_32FC1, map1, map2);
     if(map1.isContinuous()){
         memcpy(mapx, map1.data, SENSOR_W * SENSOR_H * sizeof(float));
     }else{

@@ -55,3 +55,6 @@ target_link_libraries(QcomOpenCLUtils log libOpenCL)
 #################fisheyeCamera
 add_library(fisheyeCamera SHARED TestModules/FisheyeCamera/fisheye.cpp)
 target_link_libraries(fisheyeCamera ${OpenCV_LIBS})
+
+################remap
+#add_library(remap )
