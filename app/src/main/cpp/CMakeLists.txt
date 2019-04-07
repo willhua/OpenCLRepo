@@ -3,13 +3,15 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+include_directories(common/)
+include_directories(TestModules/)
 include_directories(qualcomm/)
 add_library(libOpenCL SHARED IMPORTED)
 set_target_properties(libOpenCL PROPERTIES IMPORTED_LOCATION  ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${CMAKE_ANDROID_ARCH_ABI}/libOpenCL.so)
 
 
-include_directories(F:/opencv_401/build_arm_v7_v8/install/sdk/native/jni/include)
-set(OpenCV_DIR F:/opencv_401/build_arm_v7_v8/install/sdk/native/jni)
+include_directories(F:/opencv_401/build_arm_v7_v8/install_NOopencl_NOneon_NOtbb_WITHnonfree/sdk/native/jni/include)
+set(OpenCV_DIR F:/opencv_401/build_arm_v7_v8/install_NOopencl_NOneon_NOtbb_WITHnonfree/sdk/native/jni)
 find_package(OpenCV REQUIRED)
 
 
@@ -34,7 +36,9 @@ target_link_libraries( # Specifies the target library.
         log
         ${OpenCV_LIBS}
         QcomOpenCLUtils
-        ion)
+        ion
+        fisheyeCamera
+        )
 
 
 
@@ -46,3 +50,8 @@ target_link_libraries(ion log)
 aux_source_directory(qualcomm/utils QcomOpenCLUtilsSrc)
 add_library(QcomOpenCLUtils SHARED ${QcomOpenCLUtilsSrc})
 target_link_libraries(QcomOpenCLUtils log libOpenCL)
+
+
+#################fisheyeCamera
+add_library(fisheyeCamera SHARED TestModules/FisheyeCamera/fisheye.cpp)
+target_link_libraries(fisheyeCamera ${OpenCV_LIBS})
