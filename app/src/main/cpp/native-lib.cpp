@@ -8,6 +8,7 @@
 #include "ion/ion.h"
 #include "TestModules/FisheyeCamera/fisheye.h"
 #include "FileUtils.h"
+#include "Remap/remaper.h"
 
 
 AAssetManager *assetManager;
@@ -68,5 +69,20 @@ Java_com_willhua_openclrepo_MainActivity_clTest(JNIEnv *env, jobject instance) {
     Mat undistimg;
     cv::remap(srcimg, undistimg, map1, map2, INTER_LINEAR);
     imwrite("/sdcard/undist.jpg", undistimg);
+
+
+    /***************/
+    Mat yuv;
+    cvtColor(srcimg, yuv, COLOR_RGB2YUV_YV12);
+    IMAGE_DATA myimg;
+    myimg.width = w;
+    myimg.height = h;
+    myimg.format = FORMAT_YUV_NV12;
+    myimg.pplane[0] = yuv.data;
+    myimg.pplane[1] = yuv.data + w * h;
+    remaptest(&myimg, remapdata, remapdata + w * h);
+
+
+    free(remapdata);
 
 }

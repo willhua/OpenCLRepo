@@ -38,8 +38,13 @@ target_link_libraries( # Specifies the target library.
         QcomOpenCLUtils
         ion
         fisheyeCamera
+        remap
         )
 
+
+#################build common
+add_library(common SHARED common/cl_utils.cpp common/FileUtils.cpp)
+target_link_libraries(common android log)
 
 
 #################build libion
@@ -49,12 +54,13 @@ target_link_libraries(ion log)
 #################build libQcomOpenCLUtils
 aux_source_directory(qualcomm/utils QcomOpenCLUtilsSrc)
 add_library(QcomOpenCLUtils SHARED ${QcomOpenCLUtilsSrc})
-target_link_libraries(QcomOpenCLUtils log libOpenCL)
+target_link_libraries(QcomOpenCLUtils log libOpenCL ion)
 
 
 #################fisheyeCamera
 add_library(fisheyeCamera SHARED TestModules/FisheyeCamera/fisheye.cpp)
-target_link_libraries(fisheyeCamera ${OpenCV_LIBS})
+target_link_libraries(fisheyeCamera ${OpenCV_LIBS} common)
 
 ################remap
-#add_library(remap )
+add_library(remap SHARED TestModules/Remap/remaper.cpp)
+target_link_libraries(remap log libOpenCL QcomOpenCLUtils common)

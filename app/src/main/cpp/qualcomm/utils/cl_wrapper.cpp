@@ -155,7 +155,7 @@ cl_command_queue cl_wrapper::get_command_queue() const
 cl_program cl_wrapper::make_program(const char **program_source, cl_uint program_source_len)
 {
     cl_int err = 0;
-    cl_program program = clCreateProgramWithSource(m_context, program_source_len, program_source, NULL, &err);
+    cl_program program = clCreateProgramWithSource(m_context, 1, program_source, &program_source_len, &err);
     if (err != CL_SUCCESS)
     {
         std::cerr << "Error " << err << " with clCreateProgramWithSource." << "\n";
