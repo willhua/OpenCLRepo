@@ -18,13 +18,15 @@
 #include <CL/cl.h>
 #include <CL/cl_ext_qcom.h>
 
+#define USES_LIBION true
+
 #ifdef USES_ANDROID_CMAKE
 #include <msm_ion.h>
 #include <ion.h>
 #else /* USES_ANDROID_CMAKE */
 #ifdef USES_LIBION
-#include <drivers/staging/android/uapi/msm_ion.h>
-#include <ion/ion.h>
+#include "msm_ion.h"
+#include "../../ion/ion.h"
 #else /* USES_LIBION */
 #include "msm_ion.h"
 #include "../../ion/ion.h"

@@ -10,7 +10,8 @@
 
 #define LOGTAG_QCOM "LOGTAG_QCOM"
 
-#define QCOM_LOGE(...)     __android_log_print(ANDROID_LOG_ERROR, LOGTAG_QCOM, __VA_ARGS__)
+#define LOGE(...)     __android_log_print(ANDROID_LOG_ERROR, LOGTAG_QCOM, __VA_ARGS__)
+#define LOGD(...)     __android_log_print(ANDROID_LOG_DEBUG, LOGTAG_QCOM, __VA_ARGS__)
 
 
 

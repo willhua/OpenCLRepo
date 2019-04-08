@@ -28,28 +28,28 @@ cl_wrapper::cl_wrapper()
     err = clGetPlatformIDs(1, &platform, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetPlatformIDs." << "\n";
+        LOGE("Error %d with clGetPlatformIDs.", err);
         std::exit(err);
     }
 
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &m_device, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetDeviceIDs." << "\n";
+        LOGE("Error %d with clGetDeviceIDs.", err);
         std::exit(err);
     }
 
     m_context = clCreateContext(NULL, 1, &m_device, NULL, NULL, &err);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clCreateContext." << "\n";
+        LOGE("Error %d with clCreateContext.", err);
         std::exit(err);
     }
 
     m_cmd_queue = clCreateCommandQueue(m_context, m_device, 0, &err);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clCreateCommandQueue." << "\n";
+        LOGE("Error %d with clCreateCommandQueue.", err);
         std::exit(err);
     }
 
@@ -58,14 +58,14 @@ cl_wrapper::cl_wrapper()
     m_ion_device_fd = ion_open();
     if (m_ion_device_fd < 0)
     {
-        std::cerr << "Error with ion_open()\n";
+        LOGE("Error with ion_open()");
         std::exit(EXIT_FAILURE);
     }
 #else
     m_ion_device_fd = open("/dev/ion", O_RDONLY);
     if (m_ion_device_fd < 0)
     {
-        std::cerr << "Error " << errno << " opening /dev/ion : " << strerror(errno) << "\n";
+        LOGE("Error %d opening /dev/ion : %s", errno, strerror(errno));
         std::exit(errno);
     }
 #endif
@@ -78,7 +78,7 @@ cl_wrapper::~cl_wrapper()
     {
         if (munmap(pair.first, pair.second) < 0)
         {
-            std::cerr << "Error " << errno << " munmap-ing ion alloc: " << strerror(errno) << "\n";
+            LOGE("Error : %d munmap-ing ion alloc: %s", errno, strerror(errno));
             std::exit(errno);
         }
         pair.first = nullptr;
@@ -88,7 +88,7 @@ cl_wrapper::~cl_wrapper()
     {
         if (close(fd) < 0)
         {
-            std::cerr << "Error " << errno << " closing ion allocation fd: " << strerror(errno) << "\n";
+            LOGE("Error : %d closing ion allocation fd: %s", errno, strerror(errno));
             std::exit(errno);
         }
     }
@@ -96,7 +96,7 @@ cl_wrapper::~cl_wrapper()
 #if USES_LIBION
     if (ion_close(m_ion_device_fd) < 0)
     {
-        std::cerr << "Error closing ion device fd.\n";
+        LOGE("Error closing ion device fd.");
         std::exit(EXIT_FAILURE);
     }
 #else
@@ -104,14 +104,14 @@ cl_wrapper::~cl_wrapper()
     {
         if (ioctl(m_ion_device_fd, ION_IOC_FREE, &handle_data) < 0)
         {
-            std::cerr << "Error " << errno << " freeing ion alloc with ioctl: " << strerror(errno) << "\n";
+            LOGE("Error : %d freeing ion alloc with ioctl: %s", errno, strerror(errno));
             std::exit(errno);
         }
     }
 
     if (close(m_ion_device_fd) < 0)
     {
-        std::cerr << "Error " << errno << " closing ion device fd: " << strerror(errno) << "\n";
+        LOGE("Error : %d closing ion device fd: %s", errno, strerror(errno));
         std::exit(errno);
     }
 #endif
@@ -135,7 +135,7 @@ cl_kernel cl_wrapper::make_kernel(const std::string &kernel_name, cl_program pro
     cl_kernel kernel = clCreateKernel(program, kernel_name.c_str(), &err);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clCreateKernel." << "\n";
+        LOGE("Error %d with clCreateKernel.", err);
         std::exit(err);
     }
     m_kernels.push_back(kernel);
@@ -158,25 +158,25 @@ cl_program cl_wrapper::make_program(const char **program_source, cl_uint program
     cl_program program = clCreateProgramWithSource(m_context, 1, program_source, &program_source_len, &err);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clCreateProgramWithSource." << "\n";
+        LOGE("Error %d with clCreateProgramWithSource.", err);
         std::exit(err);
     }
 
     err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clBuildProgram.\n";
+        LOGE("Error %d with clBuildProgram.");
         static const size_t LOG_SIZE = 2048;
         char log[LOG_SIZE];
         log[0] = 0;
         err = clGetProgramBuildInfo(program, m_device, CL_PROGRAM_BUILD_LOG, LOG_SIZE, log, NULL);
         if (err == CL_INVALID_VALUE)
         {
-            std::cerr << "There was a build error, but there is insufficient space allocated to show the build logs.\n";
+            LOGE("There was a build error, but there is insufficient space allocated to show the build logs.");
         }
         else
         {
-            std::cerr << "Build error:\n" << log << "\n";
+            LOGE("Build error: %s", log );
         }
         std::exit(EXIT_FAILURE);
     }
@@ -198,7 +198,7 @@ cl_wrapper::make_ion_buffer_for_yuv_image(const cl_image_format &img_format, con
     err = clGetDeviceInfo(m_device, CL_DEVICE_EXT_MEM_PADDING_IN_BYTES_QCOM, sizeof(padding_in_bytes), &padding_in_bytes, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetDeviceInfo for padding." << "\n";
+        LOGE("Error %d with clGetDeviceInfo for padding.", err);
         std::exit(err);
     }
 
@@ -224,7 +224,7 @@ bool cl_wrapper::check_extension_support(const std::string &desired_extension) c
     static const std::string extensions = init_extension_string(m_device);
     if (extensions.size() == 0)
     {
-        std::cerr << "Couldn't identify available OpenCL extensions\n";
+        LOGE("Couldn't identify available OpenCL extensions");
         std::exit(EXIT_FAILURE);
     }
 
@@ -237,7 +237,7 @@ size_t cl_wrapper::get_ion_image_row_pitch(const cl_image_format &img_format, co
     cl_int err = clGetDeviceImageInfoQCOM(m_device, img_desc.image_width, img_desc.image_height, &img_format,
                                           CL_IMAGE_ROW_PITCH, sizeof(img_row_pitch), &img_row_pitch, NULL);
     if (err != CL_SUCCESS) {
-        std::cerr << "Error " << err << " with clGetDeviceImageInfoQCOM for CL_IMAGE_ROW_PITCH." << "\n";
+        LOGE("Error %d with clGetDeviceImageInfoQCOM for CL_IMAGE_ROW_PITCH.", err);
         std::exit(err);
     }
     return img_row_pitch;
@@ -256,14 +256,14 @@ cl_wrapper::make_ion_buffer_for_compressed_image(cl_image_format img_format, con
                                        && img_format.image_channel_data_type == CL_UNORM_INT8;
     if (!valid_compressed_nv12 && !valid_compressed_p010 && !valid_compressed_tp10 && !valid_compressed_rgba)
     {
-        std::cerr << "Unsupported image format for compressed image.\n";
+        LOGE("Unsupported image format for compressed image.");
         std::exit(EXIT_FAILURE);
     }
 
     static const size_t max_dims = 2048;
     if (img_desc.image_height > max_dims || img_desc.image_width > max_dims)
     {
-        std::cerr << "For this example, the image dimensions must be less than or equal to " << max_dims << "\n";
+        LOGE("For this example, the image dimensions must be less than or equal to %d ", max_dims);
         std::exit(EXIT_FAILURE);
     }
 
@@ -290,7 +290,7 @@ cl_wrapper::make_ion_buffer_for_nonplanar_image(const cl_image_format &img_forma
     err = clGetDeviceInfo(m_device, CL_DEVICE_EXT_MEM_PADDING_IN_BYTES_QCOM, sizeof(padding_in_bytes), &padding_in_bytes, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetDeviceInfo for padding." << "\n";
+        LOGE("Error %d with clGetDeviceInfo for padding.", err);
         std::exit(err);
     }
 
@@ -305,7 +305,7 @@ size_t cl_wrapper::get_max_workgroup_size(cl_kernel kernel) const
     cl_int err = clGetKernelWorkGroupInfo(kernel, m_device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(result), &result, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetKernelWorkGroupInfo for CL_KERNEL_WORK_GROUP_SIZE." << "\n";
+        LOGE("Error %d with clGetKernelWorkGroupInfo for CL_KERNEL_WORK_GROUP_SIZE.", err);
         std::exit(err);
     }
 
@@ -325,7 +325,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     err = clGetDeviceInfo(m_device, CL_DEVICE_PAGE_SIZE_QCOM, sizeof(device_page_size), &device_page_size, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetDeviceInfo for page size." << "\n";
+        LOGE("Error %d with clGetDeviceInfo for page size.", err);
         std::exit(err);
     }
 
@@ -334,7 +334,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     err = ion_alloc_fd(m_ion_device_fd, size, device_page_size, ION_HEAP(ION_SYSTEM_HEAP_ID), ion_allocation_flags, &fd);
     if (err == -1)
     {
-        std::cerr << "Error allocating ion memory\n";
+        LOGE("Error allocating ion memory");
         std::exit(EXIT_FAILURE);
     }
 
@@ -342,7 +342,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     if (MAP_FAILED == host_addr)
     {
         close(fd);
-        std::cerr << "Error " << errno << " mmapping fd to pointer: " << strerror(errno) << "\n";
+        LOGE("Error : %d mmapping fd to pointer: %s", errno, strerror(errno));
         std::exit(errno);
     }
 
@@ -362,7 +362,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     allocation_data.flags        = ion_allocation_flags;    //ION_FLAG_CACHED
     if (ioctl(m_ion_device_fd, ION_IOC_ALLOC, &allocation_data))
     {
-        std::cerr << "Error " << errno << " allocating ion memory: " << strerror(errno) << "\n";
+        LOGE("Error : %d allocating ion memory: %s", errno, strerror(errno));
         std::exit(errno);
     }
 
@@ -373,7 +373,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     if (ioctl(m_ion_device_fd, ION_IOC_MAP, &fd_data))
     {
         ioctl(m_ion_device_fd, ION_IOC_FREE, &handle_data);
-        std::cerr << "Error " << errno << " mapping ion memory to cpu-addressable fd: " << strerror(errno) << "\n";
+        LOGE("Error : %d mapping ion memory to cpu-addressable fd: %s", errno, strerror(errno));
         std::exit(errno);
     }
 
@@ -382,7 +382,7 @@ cl_mem_ion_host_ptr cl_wrapper::make_ion_buffer_internal(size_t size, unsigned i
     {
         close(fd_data.fd);
         ioctl(m_ion_device_fd, ION_IOC_FREE, &handle_data);
-        std::cerr << "Error " << errno << " mmapping fd to pointer: " << strerror(errno) << "\n";
+        LOGE("Error : %d mmapping fd to pointer: %s", errno, strerror(errno));
         std::exit(errno);
     }
 
@@ -411,7 +411,7 @@ cl_wrapper::make_iocoherent_ion_buffer_for_yuv_image(const cl_image_format &img_
     err = clGetDeviceInfo(m_device, CL_DEVICE_EXT_MEM_PADDING_IN_BYTES_QCOM, sizeof(padding_in_bytes), &padding_in_bytes, NULL);
     if (err != CL_SUCCESS)
     {
-        std::cerr << "Error " << err << " with clGetDeviceInfo for padding." << "\n";
+        LOGE("Error %d with clGetDeviceInfo for padding.", err);
         std::exit(err);
     }
 
