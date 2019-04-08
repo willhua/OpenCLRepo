@@ -19,7 +19,9 @@ const char * getCLErrString(const cl_int err);
 
 inline void checkCLErr(const cl_int err, const std::string &msg = ""){
     if(CL_SUCCESS != err){
-        LOGD("ERROR: %s     %s", getCLErrString(err), msg.c_str());
+        LOGE("ERROR: %s     %s", getCLErrString(err), msg.c_str());
+    }else{
+        LOGD("success:%s", msg.c_str());
     }
 }
 
