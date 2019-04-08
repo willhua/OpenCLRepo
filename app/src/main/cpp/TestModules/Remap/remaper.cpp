@@ -56,9 +56,9 @@ FUNC_STATUS initRemaper(void **outEngine, pREMAPER_INIT_PARAM param){
     remap_image_desc.image_height = engine->imgheight;
     remap_image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
-    engine->memRemapX = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, &remap_image_format, &remap_image_desc, param->remapx, &err);
+    engine->memRemapX = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &remap_image_format, &remap_image_desc, param->remapx, &err);
     checkCLErr(err, "engine->memRemapX");
-    engine->memRemapY = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, &remap_image_format, &remap_image_desc, param->remapy, &err);
+    engine->memRemapY = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &remap_image_format, &remap_image_desc, param->remapy, &err);
     checkCLErr(err, "engine->memRemapY");
 
     engine->program = engine->pwrapper->make_program(&kernel_code, strlen(kernel_code));
@@ -74,7 +74,8 @@ FUNC_STATUS initRemaper(void **outEngine, pREMAPER_INIT_PARAM param){
 
 //NV12
 FUNC_STATUS remap(void *pengine, pImageDATA imgdata){
-    pRemapEngine engine = (pRemapEngine)engine;
+    LOGD("remap start %p", pengine);
+    pRemapEngine engine = (pRemapEngine)pengine;
     cl_int err;
     cl_context context = engine->pwrapper->get_context();
 
@@ -88,7 +89,7 @@ FUNC_STATUS remap(void *pengine, pImageDATA imgdata){
     image_desc.image_height = imgdata->height;
     image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
-    cl_mem mem_srcy = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, &image_format, &image_desc, imgdata->pplane[0], &err);
+    cl_mem mem_srcy = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &image_format, &image_desc, imgdata->pplane[0], &err);
     checkCLErr(err, "mem_srcy");
     cl_mem mem_outy = clCreateImage(context, CL_MEM_WRITE_ONLY, &image_format, &image_desc, NULL, &err);
     checkCLErr(err, "mem_outy");
@@ -96,7 +97,7 @@ FUNC_STATUS remap(void *pengine, pImageDATA imgdata){
     image_format.image_channel_order = CL_RG;
     image_desc.image_width = imgdata->pstride[1] / 2;
     image_desc.image_height = imgdata->height / 2;
-    cl_mem mem_srcuv = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, &image_format, &image_desc, imgdata->pplane[1], &err);
+    cl_mem mem_srcuv = clCreateImage(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &image_format, &image_desc, imgdata->pplane[1], &err);
     checkCLErr(err, "mem_SRCUV");
     cl_mem mem_outUV = clCreateImage(context, CL_MEM_WRITE_ONLY, &image_format, &image_desc, NULL, &err);
     checkCLErr(err, "mem_OUTUV");
@@ -161,7 +162,7 @@ void remaptest(pImageDATA img, float *remapx, float *remapy){
     init_param.imgwidth = img->width;
     init_param.imgformat = FORMAT_YUV_NV12;
     init_param.remapx = remapx;
-    init_param.remapx = remapy;
+    init_param.remapy = remapy;
 
 
     initRemaper(&engine, &init_param);
@@ -169,4 +170,5 @@ void remaptest(pImageDATA img, float *remapx, float *remapy){
     remap(engine, img);
 
 
+    LOGD("remaptest end");
 }

@@ -28,7 +28,7 @@ __kernel void remapy(read_only image2d_t src, write_only image2d_t dst, read_onl
     float2 y_v = mix(y01, y23, ffrac.y);
     float result = mix(y_v.x, y_v.y, ffrac.x);
 
-    write_imageui(dst, coord, (uint4)((uint)(result), 0, 0, 0);
+    write_imageui(dst, coord, (uint4)((uint)(result), 0, 0, 0));
 }
 
 
@@ -59,5 +59,5 @@ __kernel void remapuv(read_only image2d_t src, write_only image2d_t dst, read_on
     float4 y_v = mix(y01, y23, ffrac.y);
     float2 result = mix(y_v.xy, y_v.zw, ffrac.x);
 
-    write_imageui(dst, coord, (uint4)(convert_uint2(result), 0, 0);
+    write_imageui(dst, coord, (uint4)(convert_uint2(result), 0, 0));
 }
